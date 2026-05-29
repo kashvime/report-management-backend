@@ -1,15 +1,26 @@
+<div align="center">
+
 # Data Quality & Report Management Backend
 
 A FastAPI + PostgreSQL backend for managing datasets and tracking data quality
 through validation rules, runs, and errors.
 
-**Stack:** FastAPI · PostgreSQL (SQLAlchemy ORM) · Alembic · Pydantic v2
+<br>
+
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?style=for-the-badge)
+![Alembic](https://img.shields.io/badge/Alembic-Migrations-6BA81E?style=for-the-badge)
+![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge)
+
+</div>
 
 ---
 
 ## Getting Started
 
-**Prerequisites:** Python 3.12+ · PostgreSQL running locally
+> **Prerequisites:** Python 3.12+ · PostgreSQL running locally
 
 ### 1. Clone the repo
 
@@ -64,9 +75,7 @@ alembic upgrade head
 uvicorn main:app --reload
 ```
 
-Once running:
-- API docs: http://localhost:8000/docs
-- Health check: http://localhost:8000/health
+> API docs → http://localhost:8000/docs &nbsp;&nbsp;|&nbsp;&nbsp; Health check → http://localhost:8000/health
 
 ---
 
@@ -179,5 +188,3 @@ app/
 alembic/                 # migrations
 main.py                  # app entry point
 ```
-
----
