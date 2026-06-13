@@ -44,15 +44,23 @@ GRANT ALL ON SCHEMA public TO report_management_user;
 
 ### 3. Create and activate a virtual environment
 
+This project uses uv for dependency management. It creates the virtual environment and installs all dependencies from the project configuration in a single step. 
+
+Install uv using either:
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+or
+
+```bash
+pip install uv
 ```
 
 ### 4. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 5. Configure environment variables
@@ -66,13 +74,13 @@ DATABASE_URL=postgresql://report_management_user:yourpassword@localhost:5432/rep
 ### 6. Run migrations
 
 ```bash
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ### 7. Start the server
 
 ```bash
-uvicorn main:app --reload
+uv run uvicorn main:app --reload
 ```
 
 > API docs → http://localhost:8000/docs &nbsp;&nbsp;|&nbsp;&nbsp; Health check → http://localhost:8000/health
