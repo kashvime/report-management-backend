@@ -1,15 +1,24 @@
-from pydantic import BaseModel, ConfigDict
-from datetime import datetime
+from pydantic import BaseModel
+
+from app.schemas.common import RunStatus, TimeStampRead
 
 class ValidationRunUpdate(BaseModel):
-    status: str | None = None
+    status: RunStatus | None = None
 
-
-class ValidationRunRead(BaseModel):
+class ValidationRunRead(TimeStampRead):
     id: int
     dataset_id: int
-    status: str
-    created_at: datetime
-    updated_at: datetime
+    status: RunStatus
+    # Populated once the run reaches a terminal state; null while pending/running.
+    total_records_checked: int | None = None
+    total_errors_found: int | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+class ValidationRunSummary(BaseModel):
+    """Result returned by POST /datasets/{dataset_id}/run-validation."""
+    run_id: int
+    dataset_id: int
+    status: RunStatus
+    total_records_checked: int | None = None
+    total_errors_found: int | None = None
+    errors_by_rule: dict[str, int]
+    
