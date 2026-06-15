@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app import db
 from app.api.v1.dependencies import get_dataset_or_404, get_run_or_404
 from app.db.session import get_db
 from app.models.validation_run import ValidationRun
@@ -59,10 +60,13 @@ def update_run(dataset_id: int, run_id: int, data: ValidationRunUpdate, db: Sess
     Input:  dataset_id (path), run_id (path), ValidationRunUpdate (status)
     Output: ValidationRunRead with updated status
     Raises: 404 if dataset or run not found
-    Note:   In production status transitions are driven by the execution engine
     """
     run = get_run_or_404(db, dataset_id, run_id)
-    run.status = data.status
+
+    updates = data.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(run, field, value)
+
     db.commit()
     db.refresh(run)
     return run

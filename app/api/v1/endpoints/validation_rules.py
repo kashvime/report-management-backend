@@ -18,12 +18,12 @@ def create_rule(dataset_id: int, data: ValidationRuleCreate, db: Session = Depen
     """
     Create a new validation rule for a dataset.
 
-    Input:  dataset_id (path), ValidationRuleCreate (name, rule_type)
+    Input:  dataset_id (path), ValidationRuleCreate (name, rule_type, optional column_name, params, is_active)
     Output: ValidationRuleRead
     Raises: 404 if dataset not found
     """
     get_dataset_or_404(db, dataset_id)
-    rule = ValidationRule(dataset_id=dataset_id, name=data.name, rule_type=data.rule_type)
+    rule = ValidationRule(dataset_id=dataset_id, **data.model_dump())
     db.add(rule)
     db.commit()
     db.refresh(rule)
