@@ -10,7 +10,7 @@ account_id,customer_id,account_type,open_date,closed_date,status,registration_id
 9,8,Credit,2023-12-05,2024-12-06,Closed,3,6122.37
 10,9,Savings,2024-12-23,,Open,1,9902.01
 11,10,Checking,2021-09-10,,Open,3,4903.83
-12,11,Checking,2020-11-23,2021-08-03,Closed,3,46007.63
+11,11,Checking,2020-11-23,2021-08-03,Closed,3,46007.63
 13,11,Credit,2025-05-10,,Open,2,-1539.24
 14,11,Savings,2023-07-01,2024-04-06,Closed,1,29261.4
 15,12,Savings,2020-07-30,2021-03-02,Closed,3,5750.62
@@ -36,7 +36,7 @@ account_id,customer_id,account_type,open_date,closed_date,status,registration_id
 35,21,Savings,2025-04-06,,Open,3,15122.1
 36,21,Checking,2023-11-02,2024-03-20,Closed,2,3281.04
 37,21,Checking,2023-06-22,2025-03-04,Closed,2,19207.99
-38,22,Savings,2021-03-31,,Open,3,11947.59
+38,22,Savings,2021-03-31,,Closed,3,11947.59
 39,23,Savings,2021-03-24,,Open,1,24066.52
 40,23,Checking,2025-04-21,,Open,1,33677.19
 41,24,Checking,2022-01-09,,Open,2,30588.54
@@ -80,7 +80,7 @@ account_id,customer_id,account_type,open_date,closed_date,status,registration_id
 79,43,Checking,2024-01-23,,Open,3,27909.08
 80,44,Credit,2021-01-25,2023-09-19,Closed,1,8565.36
 81,45,Checking,2023-11-09,,Open,2,12397.88
-82,45,Checking,2020-12-26,,Open,3,17768.37
+82,45,Checkings,2020-12-26,,Open,3,17768.37
 83,46,Savings,2021-12-21,2023-06-29,Closed,2,37751.75
 84,46,Savings,2021-03-14,2024-09-02,Closed,1,30936.78
 85,46,Savings,2020-12-31,2024-09-30,Closed,3,5722.86
@@ -118,7 +118,7 @@ account_id,customer_id,account_type,open_date,closed_date,status,registration_id
 117,62,Credit,2021-11-16,,Open,2,7420.19
 118,63,Credit,2025-03-16,,Open,2,-5338.72
 119,64,Savings,2021-10-16,2022-06-22,Closed,2,38571.53
-120,64,Checking,2022-01-10,2025-05-04,Closed,3,2697.0
+120,64,Checking,2022-01-10,2025-05-04,Closed,3,-2697.0
 121,64,Credit,2021-11-22,2024-08-12,Closed,2,1619.2
 122,65,Credit,2022-08-09,2025-04-05,Closed,2,-5691.61
 123,65,Savings,2023-05-02,,Open,2,2627.67
@@ -126,7 +126,7 @@ account_id,customer_id,account_type,open_date,closed_date,status,registration_id
 125,67,Savings,2024-08-25,2025-04-25,Closed,1,27888.43
 126,67,Checking,2023-12-05,,Open,1,16975.19
 127,67,Credit,2020-12-01,,Open,2,5895.8
-128,68,Checking,2022-06-20,2023-06-28,Closed,3,12774.99
+128,68,Checking,2024-06-20,2023-06-28,Closed,3,12774.99
 129,68,Savings,2022-12-08,,Open,1,18435.21
 130,68,Credit,2023-05-03,2024-01-22,Closed,1,-6244.3
 131,69,Credit,2022-07-27,2024-01-24,Closed,2,-3755.36
@@ -169,7 +169,7 @@ account_id,customer_id,account_type,open_date,closed_date,status,registration_id
 168,90,Credit,2023-12-02,,Open,1,-9508.71
 169,90,Savings,2021-02-16,,Open,2,47276.72
 170,91,Savings,2022-09-09,2023-11-11,Closed,2,48604.66
-171,92,Savings,2025-01-08,2025-03-21,Closed,2,21760.66
+171,92,Savings,2025-01-08,2028-03-21,Closed,2,21760.66
 172,93,Savings,2025-02-25,2025-03-01,Closed,3,36403.21
 173,93,Checking,2024-07-30,2025-07-05,Closed,2,481.66
 174,94,Credit,2022-07-23,2023-09-25,Closed,3,5181.72
@@ -187,7 +187,7 @@ account_id,customer_id,account_type,open_date,closed_date,status,registration_id
 186,98,Checking,2021-11-30,,Open,2,15538.21
 187,98,Credit,2021-12-25,2023-06-06,Closed,3,9546.55
 188,99,Credit,2024-07-29,2025-01-04,Closed,1,8681.8
-189,99,Checking,2021-11-23,2024-05-27,Closed,2,36069.39
+189,99,Checking,2021-11-23,2024-05-27,Closed,2,-36069.39
 190,99,Checking,2022-12-15,2025-02-04,Closed,2,2557.62
 191,100,Savings,2021-07-01,2025-06-20,Closed,3,34036.27
 192,100,Credit,2023-09-04,2024-05-29,Closed,1,9898.81
