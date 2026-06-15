@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.v1.router import router
 
+
 app = FastAPI(
     title="Data Quality & Report Management API",
     version="1.0.0"
