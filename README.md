@@ -7,7 +7,7 @@ through validation rules, runs, and errors.
 
 <br>
 
-![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.14+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?style=for-the-badge)
@@ -20,7 +20,7 @@ through validation rules, runs, and errors.
 
 ## Getting Started
 
-> **Prerequisites:** Python 3.12+ · PostgreSQL running locally
+> **Prerequisites:** Python 3.14+ · PostgreSQL running locally
 
 ### 1. Clone the repo
 
@@ -77,7 +77,16 @@ DATABASE_URL=postgresql://report_management_user:yourpassword@localhost:5432/rep
 uv run alembic upgrade head
 ```
 
-### 7. Start the server
+### 7. Seed sample data (optional)
+
+Loads the sample datasets in `sample_data/` along with their validation rules,
+so you have something to run validations against right away:
+
+```bash
+uv run python -m app.scripts.seed_data
+```
+
+### 8. Start the server
 
 ```bash
 uv run uvicorn main:app --reload
@@ -145,13 +154,17 @@ rules and runs live under a dataset, errors live under a run.
 <summary>Validation Runs — <code>/datasets/{dataset_id}/runs</code></summary>
 <br>
 
-| Method   | Path                                   | Action       |
-| -------- | -------------------------------------- | ------------ |
-| `POST`   | `/datasets/{dataset_id}/runs`          | Create a run |
-| `GET`    | `/datasets/{dataset_id}/runs`          | List runs    |
-| `GET`    | `/datasets/{dataset_id}/runs/{run_id}` | Get a run    |
-| `PATCH`  | `/datasets/{dataset_id}/runs/{run_id}` | Update a run |
-| `DELETE` | `/datasets/{dataset_id}/runs/{run_id}` | Delete a run |
+| Method   | Path                                     | Action                                   |
+| -------- | ---------------------------------------- | ---------------------------------------- |
+| `POST`   | `/datasets/{dataset_id}/run-validation`  | **Run all active rules against the CSV** |
+| `POST`   | `/datasets/{dataset_id}/runs`            | Create a run                             |
+| `GET`    | `/datasets/{dataset_id}/runs`            | List runs                                |
+| `GET`    | `/datasets/{dataset_id}/runs/{run_id}`   | Get a run                                |
+| `PATCH`  | `/datasets/{dataset_id}/runs/{run_id}`   | Update a run                             |
+| `DELETE` | `/datasets/{dataset_id}/runs/{run_id}`   | Delete a run                             |
+
+`run-validation` executes the dataset's active rules and returns a summary —
+records checked, total errors, and a per-rule-type error breakdown.
 
 </details>
 
@@ -170,9 +183,61 @@ rules and runs live under a dataset, errors live under a run.
 
 ---
 
+## Validation Engine
+
+Triggering `POST /datasets/{dataset_id}/run-validation` loads the dataset's CSV
+from `sample_data/`, runs every **active** rule against it, persists one
+`ValidationError` per failing row, and returns a run summary including
+`errors_by_rule` (counts grouped by rule type).
+
+Each rule has a `rule_type`, a target `column_name`, and an optional `params`
+object. `params` may include a `when` clause that restricts the rule to matching
+rows (e.g. only check `closed_date` is present `when status == "Closed"`).
+
+<details>
+<summary>Sample datasets (seeded by <code>seed_data.py</code>)</summary>
+<br>
+
+| Dataset                | File                       | Rows | What it is                                                                         |
+| ---------------------- | -------------------------- | ---- | ---------------------------------------------------------------------------------- |
+| **Claims**             | `claim_data.csv`           | 597  | Healthcare insurance claims — billed/allowed/paid amounts, service dates, status   |
+| **Financial Accounts** | `financial_accounts.csv`   | 193  | Bank accounts — type, open/closed dates, balance, status                           |
+| **Travel Information** | `travel_information.csv`   | 99   | Customer travel profiles — contact info, loyalty tier, trip budget, destination    |
+
+</details>
+
+| Rule type        | Checks that…                                          |
+| ---------------- | ----------------------------------------------------- |
+| `not_null`       | the column is non-empty                               |
+| `unique`         | values in the column are unique                       |
+| `value_range`    | a numeric value is within `min`/`max`                 |
+| `allowed_values` | the value is one of an allowed set                    |
+| `not_future_date`| a date is not in the future                           |
+| `column_gte`     | the column is ≥ another column                        |
+| `date_lte_column`| a date is on or before another column's date          |
+| `must_be_blank`  | the column is blank                                   |
+| `regex_match`    | the value matches a regex `pattern`                   |
+
+The engine lives in `app/services/` — `rules.py` (pure per-rule checkers) and
+`validation_engine.py` (orchestration). See `app/scripts/seed_data.py` for
+worked examples of every rule type.
+
+---
+
+## Running Tests
+
+Tests run against the configured Postgres database, each wrapped in a
+transaction that is rolled back, so nothing is persisted:
+
+```bash
+uv run pytest
+```
+
+---
+
 ## Architecture
 
-The app is structured in three layers:
+The app is structured in layers:
 
 **Models** (`app/models/`) define the database schema using SQLAlchemy ORM.
 
@@ -180,11 +245,14 @@ The app is structured in three layers:
 
 **Endpoints** (`app/api/v1/endpoints/`) wire HTTP requests to database operations.
 
+**Services** (`app/services/`) hold the validation engine and business logic,
+kept independent of the HTTP layer.
+
 ```
 app/
 ├── api/v1/
 │   ├── endpoints/       # route handlers
-│   ├── dependencies.py  # shared dependencies (get_db)
+│   ├── dependencies.py  # shared dependencies (get_db, 404 helpers)
 │   └── router.py        # combines all routers
 ├── core/
 │   └── config.py        # environment config
@@ -192,7 +260,12 @@ app/
 │   ├── base.py          # SQLAlchemy Base
 │   └── session.py       # engine and get_db
 ├── models/              # ORM models
-└── schemas/             # Pydantic schemas
+├── schemas/             # Pydantic schemas
+├── services/            # validation engine + business logic
+├── scripts/             # seed_data and other CLI scripts
+└── utils.py             # shared helpers
+sample_data/             # sample CSVs for seeded datasets
+tests/                   # pytest suite
 alembic/                 # migrations
 main.py                  # app entry point
 ```
