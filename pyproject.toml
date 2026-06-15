@@ -1,15 +1,17 @@
 [project]
 name = "report-management-backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI + PostgreSQL backend for dataset validation and data-quality tracking."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.18.4",
     "fastapi>=0.136.3",
+    "httpx2>=2.4.0",
     "psycopg2>=2.9.12",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
+    "pytest>=9.1.0",
     "sqlalchemy>=2.0.50",
     "uvicorn>=0.49.0",
 ]
