@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, DateTime, ForeignKey
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Boolean, true
+from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from app.db.base import Base
 from app.utils import utc_now
@@ -22,9 +23,12 @@ class ValidationRule(Base):
     )
     
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-
-    # examples: "not_null", "unique", "range_check", "format_check"
     rule_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    column_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    params: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=true()
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

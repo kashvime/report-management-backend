@@ -29,6 +29,8 @@ class ValidationRun(Base):
         default="pending",
         index=True
     )
+    total_records_checked: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_errors_found: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

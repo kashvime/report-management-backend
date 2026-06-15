@@ -33,9 +33,10 @@ class ValidationError(Base):
         index=True
     )
 
-    rule_type_snapshot: Mapped[str | None] = mapped_column(String(50),nullable=True)
+    rule_type_snapshot: Mapped[str | None] = mapped_column(String(50), nullable=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     column_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    row_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
