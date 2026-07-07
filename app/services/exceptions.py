@@ -15,3 +15,7 @@ class DatasetNotRunnableError(ValidationEngineError):
 
 class RuleConfigError(ValidationEngineError):
     """Raised when an active rule is misconfigured."""
+
+
+class InvalidUploadError(Exception):
+    """Raised when an uploaded file is not an acceptable CSV."""

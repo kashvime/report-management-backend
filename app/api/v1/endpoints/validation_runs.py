@@ -2,12 +2,30 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app import db
-from app.api.v1.dependencies import get_dataset_or_404, get_run_or_404
+from app.api.v1.dependencies import get_dataset_or_404, get_run_by_id_or_404, get_run_or_404
 from app.db.session import get_db
 from app.models.validation_run import ValidationRun
-from app.schemas.validation_run import ValidationRunUpdate, ValidationRunRead
+from app.schemas.validation_run import ValidationRunReport, ValidationRunUpdate, ValidationRunRead
+from app.services.validation_engine import build_run_report
 
 router = APIRouter(prefix="/datasets/{dataset_id}/runs", tags=["Validation Runs"])
+
+# Run-centric routes that aren't scoped to a dataset in the URL.
+run_router = APIRouter(prefix="/validation-runs", tags=["Validation Runs"])
+
+
+@run_router.get("/{run_id}/summary", response_model=ValidationRunReport)
+def get_run_summary(run_id: int, db: Session = Depends(get_db)):
+    """
+    Return an aggregated summary of a validation run.
+
+    Input:  run_id (path)
+    Output: ValidationRunReport with totals and error counts grouped
+            by rule type and by field
+    Raises: 404 if run not found
+    """
+    run = get_run_by_id_or_404(db, run_id)
+    return build_run_report(db, run)
 
 
 @router.post("", response_model=ValidationRunRead, status_code=status.HTTP_201_CREATED)
