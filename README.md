@@ -101,19 +101,21 @@ uv run uvicorn main:app --reload
 ```
 Dataset
 ├── ValidationRule   (many per dataset)
-└── ValidationRun    (many per dataset)
+├── DatasetFile      (many per dataset)
+└── ValidationRun    (many per dataset, optionally linked to a file)
         └── ValidationError  (many per run)
 ```
 
-`Dataset` is the root entity. Rules and runs belong to a dataset; errors belong
-to a run and reference the rule that failed.
+`Dataset` is the root entity. Rules, uploaded files, and runs belong to a
+dataset; errors belong to a run and reference the rule that failed.
 
-| Model             | Description                               | Relationships                                        |
-| ----------------- | ----------------------------------------- | ---------------------------------------------------- |
-| `Dataset`         | Root data source being checked            | Owns rules and runs; delete cascades to both         |
-| `ValidationRule`  | A reusable quality rule for a dataset     | Belongs to one dataset; referenced by errors         |
-| `ValidationRun`   | One execution of validation on a dataset  | Belongs to one dataset; owns errors (cascade delete) |
-| `ValidationError` | A single failure recorded during a run    | Belongs to one run; nullable link to the failed rule |
+| Model             | Description                               | Relationships                                          |
+| ----------------- | ----------------------------------------- | ------------------------------------------------------ |
+| `Dataset`         | Root data source being checked            | Owns rules, files, and runs; delete cascades to all    |
+| `ValidationRule`  | A reusable quality rule for a dataset     | Belongs to one dataset; referenced by errors           |
+| `DatasetFile`     | An uploaded CSV stored on local disk      | Belongs to one dataset; referenced by runs             |
+| `ValidationRun`   | One execution of validation on a dataset  | Belongs to one dataset; owns errors (cascade delete); nullable link to the file it validated |
+| `ValidationError` | A single failure recorded during a run    | Belongs to one run; nullable link to the failed rule   |
 
 ---
 
@@ -137,6 +139,24 @@ rules and runs live under a dataset, errors live under a run.
 </details>
 
 <details>
+<summary>Dataset Files — <code>/datasets/{dataset_id}/files</code></summary>
+<br>
+
+| Method | Path                                                      | Action                                        |
+| ------ | --------------------------------------------------------- | --------------------------------------------- |
+| `POST` | `/datasets/{dataset_id}/files`                             | Upload a CSV (multipart form, `file` field)   |
+| `GET`  | `/datasets/{dataset_id}/files`                             | List uploaded files                           |
+| `GET`  | `/datasets/{dataset_id}/files/{file_id}`                   | Get an uploaded file's metadata               |
+| `POST` | `/datasets/{dataset_id}/files/{file_id}/run-validation`    | **Run all active rules against the file**     |
+
+Only CSV uploads are accepted (extension + content type checked; anything else
+is rejected with `400`). Files are stored locally under
+`uploads/datasets/{dataset_id}/` with a generated filename so uploads never
+collide; the original filename is kept for display.
+
+</details>
+
+<details>
 <summary>Validation Rules — <code>/datasets/{dataset_id}/rules</code></summary>
 <br>
 
@@ -154,17 +174,28 @@ rules and runs live under a dataset, errors live under a run.
 <summary>Validation Runs — <code>/datasets/{dataset_id}/runs</code></summary>
 <br>
 
-| Method   | Path                                     | Action                                   |
-| -------- | ---------------------------------------- | ---------------------------------------- |
-| `POST`   | `/datasets/{dataset_id}/run-validation`  | **Run all active rules against the CSV** |
-| `POST`   | `/datasets/{dataset_id}/runs`            | Create a run                             |
-| `GET`    | `/datasets/{dataset_id}/runs`            | List runs                                |
-| `GET`    | `/datasets/{dataset_id}/runs/{run_id}`   | Get a run                                |
-| `PATCH`  | `/datasets/{dataset_id}/runs/{run_id}`   | Update a run                             |
-| `DELETE` | `/datasets/{dataset_id}/runs/{run_id}`   | Delete a run                             |
+| Method   | Path                                            | Action                                          |
+| -------- | ----------------------------------------------- | ----------------------------------------------- |
+| `POST`   | `/datasets/{dataset_id}/run-validation`         | **Run all active rules against the sample CSV** |
+| `GET`    | `/validation-runs/{run_id}/summary`             | **Aggregated run summary** (see below)          |
+| `POST`   | `/datasets/{dataset_id}/runs`                   | Create a run                                    |
+| `GET`    | `/datasets/{dataset_id}/runs`                   | List runs                                       |
+| `GET`    | `/datasets/{dataset_id}/runs/{run_id}`          | Get a run                                       |
+| `PATCH`  | `/datasets/{dataset_id}/runs/{run_id}`          | Update a run                                    |
+| `DELETE` | `/datasets/{dataset_id}/runs/{run_id}`          | Delete a run                                    |
 
-`run-validation` executes the dataset's active rules and returns a summary —
-records checked, total errors, and a per-rule-type error breakdown.
+The `run-validation` endpoints (here and under files) execute the dataset's
+active rules and return a summary — records checked, total errors, and a
+per-rule-type error breakdown.
+
+`GET /validation-runs/{run_id}/summary` returns a richer report for any run:
+dataset name, file name, status, totals, and error counts grouped both by rule
+type (`errors_by_rule_type`) and by column (`errors_by_field`).
+
+**Run lifecycle.** Every run moves through `pending → running → completed`
+(or `failed`), with `started_at` / `completed_at` timestamps. A failed run is
+kept with its `failure_reason` (e.g. a missing file or a rule referencing a
+column the CSV doesn't have), and any partially recorded errors are discarded.
 
 </details>
 
@@ -185,10 +216,17 @@ records checked, total errors, and a per-rule-type error breakdown.
 
 ## Validation Engine
 
-Triggering `POST /datasets/{dataset_id}/run-validation` loads the dataset's CSV
-from `sample_data/`, runs every **active** rule against it, persists one
-`ValidationError` per failing row, and returns a run summary including
-`errors_by_rule` (counts grouped by rule type).
+Validation can run against two sources:
+
+- **An uploaded file** — `POST /datasets/{dataset_id}/files/{file_id}/run-validation`
+  reads the uploaded CSV from `uploads/`.
+- **The seeded sample CSV** — `POST /datasets/{dataset_id}/run-validation` loads
+  the dataset's CSV from `sample_data/`.
+
+Either way, the engine creates a run (`pending → running`), applies every
+**active** rule, persists one `ValidationError` per failing row, marks the run
+`completed` (or `failed` with a `failure_reason`), and returns a run summary
+including `errors_by_rule` (counts grouped by rule type).
 
 Each rule has a `rule_type`, a target `column_name`, and an optional `params`
 object. `params` may include a `when` clause that restricts the rule to matching
@@ -218,9 +256,10 @@ rows (e.g. only check `closed_date` is present `when status == "Closed"`).
 | `must_be_blank`  | the column is blank                                   |
 | `regex_match`    | the value matches a regex `pattern`                   |
 
-The engine lives in `app/services/` — `rules.py` (pure per-rule checkers) and
-`validation_engine.py` (orchestration). See `app/scripts/seed_data.py` for
-worked examples of every rule type.
+The engine lives in `app/services/` — `rules.py` (pure per-rule checkers),
+`validation_engine.py` (orchestration and run lifecycle), and
+`file_storage.py` (CSV upload validation and local storage). See
+`app/scripts/seed_data.py` for worked examples of every rule type.
 
 ---
 
@@ -265,6 +304,7 @@ app/
 ├── scripts/             # seed_data and other CLI scripts
 └── utils.py             # shared helpers
 sample_data/             # sample CSVs for seeded datasets
+uploads/                 # uploaded dataset files (created at runtime, gitignored)
 tests/                   # pytest suite
 alembic/                 # migrations
 main.py                  # app entry point
