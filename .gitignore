@@ -4,3 +4,4 @@ __pycache__/
 .env
 .env.save
 .DS_Store
+report-management-backend.code-workspace

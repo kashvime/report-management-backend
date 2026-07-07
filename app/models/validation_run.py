@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, DateTime, ForeignKey
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Text
 from datetime import datetime
 from app.db.base import Base
 from app.utils import utc_now
@@ -22,6 +22,15 @@ class ValidationRun(Base):
         index=True
     )
 
+    # The uploaded file the run validated. Null for legacy sample-data runs,
+    # and set to NULL if the file record is deleted so run history survives.
+    file_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("dataset_files.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
     # Lifecycle state of a validation execution
     status: Mapped[str] = mapped_column(
         String(20),
@@ -31,6 +40,10 @@ class ValidationRun(Base):
     )
     total_records_checked: Mapped[int | None] = mapped_column(Integer, nullable=True)
     total_errors_found: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -46,6 +59,8 @@ class ValidationRun(Base):
     )
 
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="runs")
+
+    file: Mapped["DatasetFile | None"] = relationship("DatasetFile", back_populates="runs")
 
     errors: Mapped[list["ValidationError"]] = relationship(
         "ValidationError",

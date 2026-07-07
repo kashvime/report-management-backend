@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.dataset import Dataset
+from app.models.dataset_file import DatasetFile
 from app.models.validation_rule import ValidationRule
 from app.models.validation_run import ValidationRun
 from app.models.validation_error import ValidationError
@@ -14,6 +15,13 @@ def get_dataset_or_404(db: Session, dataset_id: int) -> Dataset:
     if dataset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Dataset not found")
     return dataset
+
+
+def get_file_or_404(db: Session, dataset_id: int, file_id: int) -> DatasetFile:
+    file = db.get(DatasetFile, file_id)
+    if file is None or file.dataset_id != dataset_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Dataset file not found")
+    return file
 
 
 def get_rule_or_404(db: Session, dataset_id: int, rule_id: int) -> ValidationRule:

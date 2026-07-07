@@ -44,6 +44,12 @@ class Dataset(Base):
         back_populates="dataset", 
         cascade="all, delete-orphan")
     
+    # One dataset can have many uploaded files
+    files: Mapped[list["DatasetFile"]] = relationship(
+        "DatasetFile",
+        back_populates="dataset",
+        cascade="all, delete-orphan")
+    
     def __repr__(self) -> str:
         return f"<Dataset id={self.id} name={self.name!r}>"
 
